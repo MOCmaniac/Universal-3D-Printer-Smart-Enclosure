@@ -55,6 +55,21 @@ void setupEnvironmentSensor() {
                      Adafruit_BME280::FILTER_OFF);
 }
 
+void setTemp(float value) {
+  if (tempMode) {
+    tempDelta = value;
+    EEPROM.put(10, tempDelta);
+  } else {
+    if (tempUnit) {
+      tempRequestedC = value;
+      EEPROM.put(2, tempRequestedC);
+    } else {
+      tempRequestedF = fahrenheitToCelsius(value);
+      EEPROM.put(6, tempRequestedF);
+    }
+  }
+}
+
 void setUnit(byte newUnit) {
   tempUnit = newUnit;
   EEPROM.put(1, tempUnit);
@@ -65,7 +80,7 @@ void setTempMode(byte newTempMode) {
   EEPROM.put(0, tempMode);
 }
 
-void setPIDMode(byte automatic){
+void setPIDMode(byte automatic) {
   if (automatic) {
     myPID.SetMode(AUTOMATIC);
   } else {
@@ -93,17 +108,17 @@ void readEnvironmentSensor() {
   }
 }
 
-void checkError(){
+void checkError() {
   static byte lastErrorIn;
   static byte lastErrorOut;
-  
-  if(errorSensorIn != lastErrorIn){
+
+  if (errorSensorIn != lastErrorIn) {
     Serial.print(F("Home.errorSensorIn.val="));
     Serial.print(errorSensorIn);
     writeFF();
     lastErrorIn = errorSensorIn;
   }
-   if(errorSensorOut != lastErrorOut){
+  if (errorSensorOut != lastErrorOut) {
     Serial.print(F("Home.errorSensorOut.val="));
     Serial.print(errorSensorOut);
     writeFF();
@@ -126,21 +141,6 @@ int temperatureErrorFeedback() {
     return myPID.Run(t - tempIn);
   } else {
     return 0;
-  }
-}
-
-void setTemp(float value) {
-  if (tempMode) {
-    tempDelta = value;
-    EEPROM.put(10, tempDelta);
-  } else {
-    if (tempUnit) {
-      tempRequestedC = value;
-      EEPROM.put(2, tempRequestedC);
-    } else {
-      tempRequestedF = fahrenheitToCelsius(value);
-      EEPROM.put(6, tempRequestedF);
-    }
   }
 }
 
@@ -211,8 +211,6 @@ void sendTempSettings() {
     Serial.print(F("Temperature.tempUnit.txt=Temperature.degreeF.txt"));
   }
   writeFF();
-
-  checkError();
 }
 
 byte loadTempSettings(byte start) {

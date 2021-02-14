@@ -17,7 +17,7 @@ void handleDisplayInput(char* string) {
      setFanMode(value);
       break;
     case 'F':
-      newFanPower(value);
+      setFanPower(value);
       break;
     case 'h':
       homeScreenActive = 0;

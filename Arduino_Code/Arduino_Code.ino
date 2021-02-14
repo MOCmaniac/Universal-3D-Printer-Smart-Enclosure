@@ -24,6 +24,7 @@ const byte numChars = 10;
 char receivedChars[numChars];
 boolean newData = false;
 
+
 void setup() {
   Serial.begin(115200);
 
@@ -34,7 +35,6 @@ void setup() {
 
   loadSettings();
 
-  delay(10); // Needed for stability
   goToPage("Welcome");
 }
 
@@ -42,7 +42,7 @@ void loop() {
 
   recvWithStartEndMarkers();
   computeRPM();
-  setFanPower();
+  updateFanPower();
 
   if (newData) {
     handleDisplayInput(receivedChars);
