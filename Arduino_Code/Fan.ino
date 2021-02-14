@@ -16,6 +16,8 @@ int fanPWMMax = MAX_PWM;  // to save
 int fanPowerManual = 0;  // to save
 int fanPower = 0;
 
+byte inEmergency = 0;
+
 void setupFan() {
   // Configure Timer 1 for PWM @ 25 kHz.
   TCCR1A = 0;           // undo the configuration done by...
@@ -35,7 +37,7 @@ void setupFan() {
   attachInterrupt(digitalPinToInterrupt(FAN_RPM_PIN), RPMInterrupt, FALLING);
 }
 
-void setFanPower(int newPower) {
+void newFanPower(int newPower) {
   fanPowerManual = round((float) newPower * MAX_PWM / 100);
   EEPROM.put(19, fanPowerManual);
 }

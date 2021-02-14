@@ -19,8 +19,6 @@ Adafruit_BME280 bmeOut; // I2C 0x66
 byte errorSensorIn = 1; // Must be 1
 byte errorSensorOut = 1; // Must be 1
 
-byte inEmergency=0;
-
 double Kp = 20, Ki = 0.1, Kd = 0.0;
 PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
 
@@ -214,16 +212,7 @@ void sendTempSettings() {
   }
   writeFF();
 
-  Serial.print(F("Home.errorSensorIn.val="));
-  Serial.print(errorSensorIn);
-  writeFF();
-  Serial.print(F("Home.errorSensorOut.val="));
-  Serial.print(errorSensorOut);
-  writeFF();
-  if (errorSensorIn || errorSensorOut) {
-    Serial.print(F("Home.errorTimer.en=1"));
-    writeFF();
-  }
+  checkError();
 }
 
 byte loadTempSettings(byte start) {
