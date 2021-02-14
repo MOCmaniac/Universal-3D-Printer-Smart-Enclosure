@@ -16,6 +16,8 @@ int fanPWMMax = MAX_PWM;  // to save
 int fanPowerManual = 0;  // to save
 int fanPower = 0;
 
+byte safety = 0;
+
 void setupFan() {
   // Configure Timer 1 for PWM @ 25 kHz.
   TCCR1A = 0;           // undo the configuration done by...
@@ -62,7 +64,7 @@ void updateFanPower() {
     if (fanPower >= 1) {
       fanPower = map(fanPower, 0, MAX_PWM, fanPWMMin, fanPWMMax);
     }
-  } else {
+  }else{
     fanPower = fanPowerManual;
   }
   analogWrite25k(FAN_PWM_PIN, fanPower);
