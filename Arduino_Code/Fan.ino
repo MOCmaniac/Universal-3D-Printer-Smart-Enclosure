@@ -1,6 +1,6 @@
-#define FAN_RPM_PIN 2 // Only on pin 2 or 3
-#define FAN_PWM_PIN 9 // Only on pin 9 or 10
-#define MAX_PWM 320
+#define FAN_RPM_PIN 2 // Only on pin 2 or 3 (interrupt)
+#define FAN_PWM_PIN 9 // Only on pin 9 or 10 (25kHz pwm)
+#define MAX_PWM 320 // max pwm at 25kHz
 
 // Fan variables
 const byte PULSE_PER_REVOLUTION = 2;
@@ -15,8 +15,6 @@ int fanPWMMin = 35;  // to save
 int fanPWMMax = MAX_PWM;  // to save
 int fanPowerManual = 0;  // to save
 int fanPower = 0;
-
-byte safety = 0;
 
 void setupFan() {
   // Configure Timer 1 for PWM @ 25 kHz.
@@ -38,17 +36,17 @@ void setupFan() {
 }
 
 void setFanPower(int newPower) {
-  fanPowerManual = round((float) newPower * MAX_PWM / 100);
+  fanPowerManual = roundInt(newPower, MAX_PWM, 100);
   EEPROM.put(19, fanPowerManual);
 }
 
 void setPWMMin(int newMin) {
-  fanPWMMin = newMin * MAX_PWM / 100;
+  fanPWMMin = roundInt(newMin, MAX_PWM, 100);
   EEPROM.put(15, fanPWMMin);
 }
 
 void setPWMMax(int newMax) {
-  fanPWMMax = newMax * MAX_PWM / 100;
+  fanPWMMax = roundInt(newMax, MAX_PWM, 100);
   EEPROM.put(17, fanPWMMax);
 }
 
@@ -58,14 +56,27 @@ void setFanMode(byte newMode) {
   setPIDMode(fanMode);
 }
 
+void fanSafety(byte on) {
+  static byte safety;
+  if (on) {
+    safety = 1;
+    setPIDMode(0);
+  } else {
+    safety = 0;
+    setPIDMode(fanMode);
+  }
+}
+
 void updateFanPower() {
-  if (fanMode == 1) {
+  if (fanMode == 1 && !safety) {
     fanPower = constrain(temperatureErrorFeedback(), 0, MAX_PWM);
     if (fanPower >= 1) {
       fanPower = map(fanPower, 0, MAX_PWM, fanPWMMin, fanPWMMax);
     }
-  }else{
+  } else if(!safety){
     fanPower = fanPowerManual;
+  } else{
+    fanPower = MAX_PWM;
   }
   analogWrite25k(FAN_PWM_PIN, fanPower);
 }
@@ -98,7 +109,7 @@ void analogWrite25k(int pin, int value) {
 
 void sendFanValues() {
   // Fan values
-  int power = round((float) fanPower * 100 / 320);
+  int power = roundInt(fanPower, 100, 320);
   Serial.print(F("fanSlider.val="));
   Serial.print(power);
   writeFF();
@@ -151,13 +162,13 @@ void sendFanSettings() {
   }
   writeFF();
   Serial.print(F("Fan.fanPWMMin.val="));
-  Serial.print(round(fanPWMMin * 100 / 320));
+  Serial.print(roundInt(fanPWMMin, 100, 320));
   writeFF();
   Serial.print(F("Fan.fanPWMMax.val="));
-  Serial.print(round(fanPWMMax * 100 / 320));
+  Serial.print(roundInt(fanPWMMax, 100, 320));
   writeFF();
   Serial.print(F("Fan.fanPowerManual.val="));
-  Serial.print(round(fanPowerManual * 100 / 320));
+  Serial.print(roundInt(fanPowerManual, 100, 320));
   writeFF();
 }
 

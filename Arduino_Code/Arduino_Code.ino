@@ -112,3 +112,7 @@ void loadSettings() {
   address = loadFanSettings(address);
   loadLightSettings(address);
 }
+
+int roundInt(int value, int multiply, int divide) {
+  return round((float) value * multiply / divide);
+}

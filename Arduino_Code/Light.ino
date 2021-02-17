@@ -17,7 +17,7 @@ void setupLight() {
 }
 
 void setBrightness(int newBrightness) {
-  defaultBrightness = round((float) newBrightness * 255 / 100);
+  defaultBrightness = roundInt(newBrightness, 255 , 100);
   EEPROM.put(24, defaultBrightness);
 }
 
@@ -74,7 +74,7 @@ void writeBrightness() {
 void sendLightSettings() {
   // Home page
   Serial.print(F("Home.lightPower.txt=\""));
-  Serial.print(round((float) defaultBrightness * 100 / 255));
+  Serial.print(roundInt(defaultBrightness , 100 , 255));
   Serial.print(F("%\""));
   writeFF();
 

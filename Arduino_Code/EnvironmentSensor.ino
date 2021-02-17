@@ -53,6 +53,8 @@ void setupEnvironmentSensor() {
                      Adafruit_BME280::SAMPLING_NONE, // pressure
                      Adafruit_BME280::SAMPLING_X1,   // humidity
                      Adafruit_BME280::FILTER_OFF);
+
+  checkError();
 }
 
 void setTemp(float value) {
@@ -109,6 +111,7 @@ void readEnvironmentSensor() {
 }
 
 void checkError() {
+  // Only send values if it changes
   static byte lastErrorIn;
   static byte lastErrorOut;
 
@@ -124,6 +127,13 @@ void checkError() {
     writeFF();
     lastErrorOut = errorSensorOut;
   }
+
+  if (errorSensorIn || errorSensorOut) {
+    fanSafety(1);
+  } else {
+    fanSafety(0);
+  }
+
 }
 
 int temperatureErrorFeedback() {
