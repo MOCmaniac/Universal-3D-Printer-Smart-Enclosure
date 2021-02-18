@@ -9,6 +9,7 @@ byte tempUnit = 1; // to save
 float tempRequestedC = 22;  // to save
 float tempRequestedF = 72;  // to save
 float tempDelta = 3; // to save
+
 float tempIn;
 float tempOut;
 float humidityIn;
@@ -16,45 +17,52 @@ float humidityOut;
 
 Adafruit_BME280 bmeIn; // I2C 0x77
 Adafruit_BME280 bmeOut; // I2C 0x66
+byte beginSuccessIn = 0; // Must be 0 to initialize it once
+byte beginSuccessOut = 0;
 byte errorSensorIn = 1; // Must be 1
-byte errorSensorOut = 1; // Must be 1
+byte errorSensorOut = 1;
 
 double Kp = 20, Ki = 0.1, Kd = 0.0;
 PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
 
-/*
-   After this function, the sensor MUST be ready to take temperature and humidity measurements
-*/
-void setupEnvironmentSensor() {
+byte setupEnvironmentSensor() {
+  // begin() returns true on success, false otherwise
+  if (!beginSuccessIn) {
+    beginSuccessIn = bmeIn.begin(0x77);
+    // humidity sensing (suggested parameters from datasheet)
+    // suggested rate is 1Hz (1s)
+    if (beginSuccessIn) {
+      bmeIn.setSampling(Adafruit_BME280::MODE_FORCED,
+                        Adafruit_BME280::SAMPLING_X1,   // temperature
+                        Adafruit_BME280::SAMPLING_NONE, // pressure
+                        Adafruit_BME280::SAMPLING_X1,   // humidity
+                        Adafruit_BME280::FILTER_OFF);
+    }
+  }
+
+  if (!beginSuccessOut) {
+    beginSuccessOut = bmeOut.begin(0x76);
+    if (beginSuccessOut) {
+      bmeOut.setSampling(Adafruit_BME280::MODE_FORCED,
+                         Adafruit_BME280::SAMPLING_X1,   // temperature
+                         Adafruit_BME280::SAMPLING_NONE, // pressure
+                         Adafruit_BME280::SAMPLING_X1,   // humidity
+                         Adafruit_BME280::FILTER_OFF);
+    }
+  }
+
+  if (beginSuccessIn && beginSuccessOut) {
+    return 1;
+  } else {
+    return 0;
+  }
+
+}
+
+void setupPID() {
   myPID.SetOutputLimits(0, 320);
   myPID.SetMode(AUTOMATIC);
   myPID.Start(0, 0, 0);  // input, current output, setpoint
-
-  // begin() returns true on success, false otherwise
-  unsigned status = bmeIn.begin(0x77);
-  if (status) {
-    errorSensorIn = 0;
-  }
-
-  status = bmeOut.begin(0x76);
-  if (status) {
-    errorSensorOut = 0;
-  }
-  // humidity sensing (suggested parameters from datasheet)
-  // suggested rate is 1Hz (1s)
-  bmeIn.setSampling(Adafruit_BME280::MODE_FORCED,
-                    Adafruit_BME280::SAMPLING_X1,   // temperature
-                    Adafruit_BME280::SAMPLING_NONE, // pressure
-                    Adafruit_BME280::SAMPLING_X1,   // humidity
-                    Adafruit_BME280::FILTER_OFF);
-
-  bmeOut.setSampling(Adafruit_BME280::MODE_FORCED,
-                     Adafruit_BME280::SAMPLING_X1,   // temperature
-                     Adafruit_BME280::SAMPLING_NONE, // pressure
-                     Adafruit_BME280::SAMPLING_X1,   // humidity
-                     Adafruit_BME280::FILTER_OFF);
-
-  checkError();
 }
 
 void setTemp(float value) {
@@ -116,15 +124,11 @@ void checkError() {
   static byte lastErrorOut;
 
   if (errorSensorIn != lastErrorIn) {
-    Serial.print(F("Home.errorSensorIn.val="));
-    Serial.print(errorSensorIn);
-    writeFF();
+    printVal(F("Home.errorSensorIn"), errorSensorIn, 0);
     lastErrorIn = errorSensorIn;
   }
   if (errorSensorOut != lastErrorOut) {
-    Serial.print(F("Home.errorSensorOut.val="));
-    Serial.print(errorSensorOut);
-    writeFF();
+    printVal(F("Home.errorSensorOut"), errorSensorOut, 0);
     lastErrorOut = errorSensorOut;
   }
 
@@ -133,7 +137,6 @@ void checkError() {
   } else {
     fanSafety(0);
   }
-
 }
 
 int temperatureErrorFeedback() {
@@ -162,65 +165,31 @@ float fahrenheitToCelsius(float val) {
   return (val - 32) * 5 / 9;
 }
 
-void sendTempValues() {
-  Serial.print(F("tempOut.txt=\""));
+void sendEnvironmentValues() {
+  float tIn;
+  float tOut;
   if (tempUnit) {
-    Serial.print(tempOut, 1);
+    tIn = tempIn;
+    tOut = tempOut;
   } else {
-    Serial.print(celsiusToFahrenheit(tempOut), 1);
+    tIn = celsiusToFahrenheit(tempIn);
+    tOut = celsiusToFahrenheit(tempOut);
   }
-  Serial.print(F("\""));
-  writeFF();
 
-  Serial.print(F("humidityOut.txt=\""));
-  Serial.print(humidityOut, 0);
-  Serial.print(F("%\""));
-  writeFF();
-  Serial.print(F("humidityOutSli.val="));
-  Serial.print(humidityOut, 0);
-  writeFF();
-
-  Serial.print(F("tempIn.txt=\""));
-  if (tempUnit) {
-    Serial.print(tempIn, 1);
-  } else {
-    Serial.print(celsiusToFahrenheit(tempIn), 1);
-  }
-  Serial.print(F("\""));
-  writeFF();
-
-  Serial.print(F("humidityIn.txt=\""));
-  Serial.print(humidityIn, 0);
-  Serial.print(F("%\""));
-  writeFF();
-  Serial.print(F("humidityInSli.val="));
-  Serial.print(humidityIn, 0);
-  writeFF();
+  printTxt(F("Home.tempIn"), tIn, 1, "");
+  printTxt(F("Home.tempOut"), tOut, 1, "");
+  printTxt(F("Home.humidityIn"), humidityIn, 0, "%");
+  printTxt(F("Home.humidityOut"), humidityOut, 0, "%");
+  printVal(F("Home.humidityInSli"), humidityIn, 0);
+  printVal(F("Home.humidityOutSli"), humidityOut, 0);
 }
 
 void sendTempSettings() {
   // Temperature page
-  if (tempMode) {
-    Serial.print(F("Temperature.tempMode.txt=\"Relative\""));
-  } else {
-    Serial.print(F("Temperature.tempMode.txt=\"Absolute\""));
-  }
-  writeFF();
-  Serial.print(F("Temperature.tempRequestedC.val="));
-  Serial.print(tempRequestedC, 0);
-  writeFF();
-  Serial.print(F("Temperature.tempRequestedF.val="));
-  Serial.print(celsiusToFahrenheit(tempRequestedF), 0);
-  writeFF();
-  Serial.print(F("Temperature.tempDelta.val="));
-  Serial.print(tempDelta, 0);
-  writeFF();
-  if (tempUnit) {
-    Serial.print(F("Temperature.tempUnit.txt=Temperature.degreeC.txt"));
-  } else {
-    Serial.print(F("Temperature.tempUnit.txt=Temperature.degreeF.txt"));
-  }
-  writeFF();
+  printVal(F("Temperature.mode"), tempMode, 0);
+  printVal(F("Temperature.tempRequestedC"), tempRequestedC, 0);
+  printVal(F("Temperature.tempRequestedF"), celsiusToFahrenheit(tempRequestedF), 0);
+  printVal(F("Temperature.tempDelta"), tempDelta, 0);
 }
 
 byte loadTempSettings(byte start) {

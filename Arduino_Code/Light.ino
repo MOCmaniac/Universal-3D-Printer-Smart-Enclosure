@@ -73,23 +73,19 @@ void writeBrightness() {
 
 void sendLightSettings() {
   // Home page
-  Serial.print(F("Home.lightPower.txt=\""));
-  Serial.print(roundInt(defaultBrightness , 100 , 255));
-  Serial.print(F("%\""));
-  writeFF();
+  printTxt(F("Home.lightPower"), roundInt(defaultBrightness , 100 , 255), 0, "%");
 
   // Light page
-  if (!lightDoorOpen) {
-    Serial.print(F("Light.openCrop.picc=12"));
+  // Default is OFF on the GUI
+  if (lightDoorOpen) {
+    Serial.print(F("Light.open.picc=Light.picON.val"));
     writeFF();
   }
-  if (!lightDoorClosed) {
-    Serial.print(F("Light.closedCrop.picc=12"));
+  if (lightDoorClosed) {
+    Serial.print(F("Light.closed.picc=Light.picON.val"));
     writeFF();
   }
-  Serial.print(F("Light.transition.val="));
-  Serial.print(lightTransition);
-  writeFF();
+  printVal(F("Light.transition"), lightTransition, 0);
 }
 
 void loadLightSettings(byte start) {

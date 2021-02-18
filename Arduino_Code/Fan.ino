@@ -16,6 +16,8 @@ int fanPWMMax = MAX_PWM;  // to save
 int fanPowerManual = 0;  // to save
 int fanPower = 0;
 
+byte safety = 0;
+
 void setupFan() {
   // Configure Timer 1 for PWM @ 25 kHz.
   TCCR1A = 0;           // undo the configuration done by...
@@ -57,13 +59,18 @@ void setFanMode(byte newMode) {
 }
 
 void fanSafety(byte on) {
-  static byte safety;
+  static byte toPageSafety;
   if (on) {
     safety = 1;
     setPIDMode(0);
+    if(!toPageSafety){
+      goToPage("Safety");
+      toPageSafety = 1;
+    }
   } else {
     safety = 0;
     setPIDMode(fanMode);
+    toPageSafety = 0;
   }
 }
 
@@ -73,9 +80,9 @@ void updateFanPower() {
     if (fanPower >= 1) {
       fanPower = map(fanPower, 0, MAX_PWM, fanPWMMin, fanPWMMax);
     }
-  } else if(!safety){
+  } else if (!safety) {
     fanPower = fanPowerManual;
-  } else{
+  } else {
     fanPower = MAX_PWM;
   }
   analogWrite25k(FAN_PWM_PIN, fanPower);
@@ -110,66 +117,46 @@ void analogWrite25k(int pin, int value) {
 void sendFanValues() {
   // Fan values
   int power = roundInt(fanPower, 100, 320);
-  Serial.print(F("fanSlider.val="));
-  Serial.print(power);
-  writeFF();
-  Serial.print(F("fanPower.txt=\""));
-  Serial.print(power);
-  Serial.print(F("%\""));
-  writeFF();
-  Serial.print(F("fanRPM.txt=\""));
-  Serial.print(fanRPM);
-  Serial.print(F(" RPM\""));
-  writeFF();
+  printVal(F("Home.fanSlider"), power, 0);
+  printTxt(F("Home.fanPower"), power, 0, "%");
+
+  printTxt(F("Home.fanRPM"), fanRPM, 0, " RPM");
   fanDisplay();
 }
 
 void fanDisplay() {
   if (fanRPM != 0) {
-    Serial.print(F("fanRotate.en=1"));
+    Serial.print(F("Home.fanRotate.en=1"));
     writeFF();
     fanIncrement();
   } else {
-    Serial.print(F("fanRotate.en=0"));
+    Serial.print(F("Home.fanRotate.en=0"));
     writeFF();
   }
 }
 
 void fanIncrement() {
-  char* increment = "1";
+  byte increment = 1;
   if (fanPower < 65) {
-    increment = "1";
+    increment = 1;
   } else if (fanPower < 129) {
-    increment = "2";
+    increment = 2;
   } else if (fanPower < 193) {
-    increment = "3";
+    increment = 3;
   } else if (fanPower < 257) {
-    increment = "4";
+    increment = 4;
   } else {
-    increment = "6";
+    increment = 6;
   }
-  Serial.print(F("fanIncrement.val="));
-  Serial.print(increment);
-  writeFF();
+  printVal(F("Home.fanIncrement"), increment, 0);
 }
 
 void sendFanSettings() {
   // Fan page
-  if (fanMode) {
-    Serial.print(F("Fan.fanMode.txt=\"auto\""));
-  } else {
-    Serial.print(F("Fan.fanMode.txt=\"manual\""));
-  }
-  writeFF();
-  Serial.print(F("Fan.fanPWMMin.val="));
-  Serial.print(roundInt(fanPWMMin, 100, 320));
-  writeFF();
-  Serial.print(F("Fan.fanPWMMax.val="));
-  Serial.print(roundInt(fanPWMMax, 100, 320));
-  writeFF();
-  Serial.print(F("Fan.fanPowerManual.val="));
-  Serial.print(roundInt(fanPowerManual, 100, 320));
-  writeFF();
+  printVal(F("Fan.mode"), fanMode, 0);
+  printVal(F("Fan.min"), roundInt(fanPWMMin, 100, 320), 0);
+  printVal(F("Fan.max"), roundInt(fanPWMMax, 100, 320), 0);
+  printVal(F("Fan.power"), roundInt(fanPowerManual, 100, 320), 0);
 }
 
 void RPMInterrupt() {

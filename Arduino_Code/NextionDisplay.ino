@@ -14,7 +14,7 @@ void handleDisplayInput(char* string) {
       setDoorClosed(value);
       break;
     case 'f':
-     setFanMode(value);
+      setFanMode(value);
       break;
     case 'F':
       setFanPower(value);
@@ -52,11 +52,6 @@ void handleDisplayInput(char* string) {
   }
 }
 
-void sendValues() {
-  sendFanValues();
-  sendTempValues();
-}
-
 void sendSettings() {
   Serial.print(F("Welcome.initialization.en=0"));
   writeFF();
@@ -73,6 +68,22 @@ void sendSettings() {
 void goToPage(char* pageName) {
   Serial.print(F("page "));
   Serial.print(pageName);
+  writeFF();
+}
+
+void printTxt(const __FlashStringHelper* name, float value, byte precision, char* unit) {
+  Serial.print(name);
+  Serial.print(F(".txt=\""));
+  Serial.print(value, precision);
+  Serial.print(unit);
+  Serial.print(F("\""));
+  writeFF();
+}
+
+void printVal(const __FlashStringHelper* name, float value, byte precision) {
+  Serial.print(name);
+  Serial.print(F(".val="));
+  Serial.print(value, precision);
   writeFF();
 }
 

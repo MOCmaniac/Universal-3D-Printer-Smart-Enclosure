@@ -6,8 +6,15 @@ const int DOOR_SENSOR_UPDATE_RATE = 100; // Expressed in milliseconds
 unsigned long lastDoorSensorUpdate = 0;
 
 // Environment variables
-const int ENVIRONMENT_SENSOR_SAMPLING_RATE = 1000; // Expressed in milliseconds
+const int ENVIRONMENT_SENSOR_SAMPLING_RATE = 1500; // Expressed in milliseconds
 unsigned long lastEnvironmentSensorSampling = 0;
+const int SENSOR_I2C_BEGIN = 3000; // Expressed in milliseconds
+unsigned long lastI2CBegin = 0;
+byte i2cBeginOk = 0;
+
+// Fan variables
+const int FAN_RPM_UPDATE_RATE = 200; // Expressed in milliseconds
+unsigned long lastFanRPMUpdate = 0;
 
 // Light variables
 const int LIGHT_UPDATE_RATE = 25; // Expressed in milliseconds
@@ -15,8 +22,6 @@ unsigned long lastLightUpdate = 0;
 byte brightnessChanging = 0;
 
 // General variables
-const int VALUE_OUTPUT_RATE = 1000; // Expressed in milliseconds
-unsigned long lastValueOutput = 0;
 byte homeScreenActive = 0;
 
 // Serial input variables
@@ -29,7 +34,8 @@ void setup() {
   Serial.begin(115200);
 
   setupDoor();
-  setupEnvironmentSensor();
+  i2cBeginOk = setupEnvironmentSensor();
+  setupPID();
   setupFan();
   setupLight();
 
@@ -49,10 +55,21 @@ void loop() {
     newData = false;
   }
 
-  if (millis() - lastEnvironmentSensorSampling > ENVIRONMENT_SENSOR_SAMPLING_RATE) {
+  if (millis() - lastI2CBegin > SENSOR_I2C_BEGIN && !i2cBeginOk) {
+    i2cBeginOk = setupEnvironmentSensor();
+    lastI2CBegin = millis();
+  }
+
+  if (millis() - lastEnvironmentSensorSampling > ENVIRONMENT_SENSOR_SAMPLING_RATE && homeScreenActive) {
     readEnvironmentSensor();
     checkError();
+    sendEnvironmentValues();
     lastEnvironmentSensorSampling = millis();
+  }
+
+  if (millis() - lastFanRPMUpdate > FAN_RPM_UPDATE_RATE && homeScreenActive) {
+    sendFanValues();
+    lastFanRPMUpdate = millis();
   }
 
   if (millis() - lastDoorSensorUpdate > DOOR_SENSOR_UPDATE_RATE) {
@@ -66,12 +83,6 @@ void loop() {
     writeBrightness();
     lastLightUpdate = millis();
   }
-
-  if (millis() - lastValueOutput > VALUE_OUTPUT_RATE && homeScreenActive) {
-    sendValues();
-    lastValueOutput = millis();
-  }
-
 }
 
 // Code from Robin2 on arduino's website : Serial Input Basics
