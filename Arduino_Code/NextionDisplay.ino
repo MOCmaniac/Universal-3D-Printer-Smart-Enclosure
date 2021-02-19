@@ -19,6 +19,12 @@ void handleDisplayInput(char* string) {
     case 'F':
       setFanPower(value);
       break;
+    case 'g':
+      graphActive = 0;
+      break;
+    case 'G':
+      graphActive = 1;
+      break;
     case 'h':
       homeScreenActive = 0;
       break;
@@ -68,6 +74,14 @@ void sendSettings() {
 void goToPage(char* pageName) {
   Serial.print(F("page "));
   Serial.print(pageName);
+  writeFF();
+}
+
+void printAdd(byte channel, byte value) {
+  Serial.print(F("add 4,"));
+  Serial.print(channel);
+  Serial.print(F(","));
+  Serial.print(value);
   writeFF();
 }
 

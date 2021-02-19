@@ -9,6 +9,7 @@ byte tempUnit = 1; // to save
 float tempRequestedC = 22;  // to save
 float tempRequestedF = 72;  // to save
 float tempDelta = 3; // to save
+float tempRequested;
 
 float tempIn;
 float tempOut;
@@ -139,19 +140,21 @@ void checkError() {
   }
 }
 
+void tempTarget() {
+  if (tempMode) {
+    tempRequested = tempOut + tempDelta;
+  } else {
+    if (tempUnit) {
+      tempRequested = tempRequestedC;
+    } else {
+      tempRequested = tempRequestedF;
+    }
+  }
+}
+
 int temperatureErrorFeedback() {
   if (tempIn > tempOut + temperatureThreshold) {
-    float t;
-    if (tempMode) {
-      t = tempOut + tempDelta;
-    } else {
-      if (tempUnit) {
-        t = tempRequestedC;
-      } else {
-        t = tempRequestedF;
-      }
-    }
-    return myPID.Run(t - tempIn);
+    return myPID.Run(tempRequested - tempIn);
   } else {
     return 0;
   }

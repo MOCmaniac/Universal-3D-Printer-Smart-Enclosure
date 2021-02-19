@@ -60,7 +60,6 @@ void incrementBrightness() {
       currentBrightness[i] = (1 - expFilterValues[lightTransition]) * currentBrightness[i] + expFilterValues[lightTransition] * targetBrightness[i];
     } else {
       currentBrightness[i] = targetBrightness[i];
-      brightnessChanging = 0;
     }
   }
 }
