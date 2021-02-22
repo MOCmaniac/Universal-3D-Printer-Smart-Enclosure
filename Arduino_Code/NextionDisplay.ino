@@ -20,16 +20,10 @@ void handleDisplayInput(char* string) {
       setFanPower(value);
       break;
     case 'g':
-      graphActive = 0;
-      break;
-    case 'G':
-      graphActive = 1;
+      graphPageActive = value;
       break;
     case 'h':
-      homeScreenActive = 0;
-      break;
-    case 'H':
-      homeScreenActive = 1;
+      homePageActive = value;
       break;
     case 'i':
       sendSettings();
@@ -59,16 +53,14 @@ void handleDisplayInput(char* string) {
 }
 
 void sendSettings() {
-  Serial.print(F("Welcome.initialization.en=0"));
-  writeFF();
+  printEn(F("Welcome.initialization"),0);
 
-  sendTempSettings();
+  sendEnvironmentSettings();
   sendFanSettings();
   sendLightSettings();
 
   // Enable timer to switch to page Home
-  Serial.print(F("toHome.en=1"));
-  writeFF();
+  printEn(F("toHome"), 1);
 }
 
 void goToPage(char* pageName) {
@@ -98,6 +90,13 @@ void printVal(const __FlashStringHelper* name, float value, byte precision) {
   Serial.print(name);
   Serial.print(F(".val="));
   Serial.print(value, precision);
+  writeFF();
+}
+
+void printEn(const __FlashStringHelper* name, byte enable){
+  Serial.print(name);
+  Serial.print(F(".en="));
+  Serial.print(enable);
   writeFF();
 }
 

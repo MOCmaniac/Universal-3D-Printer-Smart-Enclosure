@@ -3,13 +3,13 @@
 #include <Adafruit_BME280.h>
 
 // Environment variables
-const float temperatureThreshold = 0.3;
+const float temperatureThreshold = -0.3;
 byte tempMode = 1; // to save
 byte tempUnit = 1; // to save
 float tempRequestedC = 22;  // to save
 float tempRequestedF = 72;  // to save
 float tempDelta = 3; // to save
-float tempRequested;
+float tempTarget;
 
 float tempIn;
 float tempOut;
@@ -23,7 +23,7 @@ byte beginSuccessOut = 0;
 byte errorSensorIn = 1; // Must be 1
 byte errorSensorOut = 1;
 
-double Kp = 20, Ki = 0.1, Kd = 0.0;
+double Kp = 250, Ki = 16.0, Kd = 0.0;
 PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
 
 byte setupEnvironmentSensor() {
@@ -140,21 +140,22 @@ void checkError() {
   }
 }
 
-void tempTarget() {
+void setTempTarget() {
   if (tempMode) {
-    tempRequested = tempOut + tempDelta;
+    tempTarget = tempOut + tempDelta;
   } else {
     if (tempUnit) {
-      tempRequested = tempRequestedC;
+      tempTarget = tempRequestedC;
     } else {
-      tempRequested = tempRequestedF;
+      tempTarget = tempRequestedF;
     }
   }
 }
 
 int temperatureErrorFeedback() {
+  // Stop a bit above ambiant
   if (tempIn > tempOut + temperatureThreshold) {
-    return myPID.Run(tempRequested - tempIn);
+    return myPID.Run(tempTarget - tempIn);
   } else {
     return 0;
   }
@@ -169,6 +170,7 @@ float fahrenheitToCelsius(float val) {
 }
 
 void sendEnvironmentValues() {
+  static float lastValue[4];
   float tIn;
   float tOut;
   if (tempUnit) {
@@ -179,15 +181,27 @@ void sendEnvironmentValues() {
     tOut = celsiusToFahrenheit(tempOut);
   }
 
-  printTxt(F("Home.tempIn"), tIn, 1, "");
-  printTxt(F("Home.tempOut"), tOut, 1, "");
-  printTxt(F("Home.humidityIn"), humidityIn, 0, "%");
-  printTxt(F("Home.humidityOut"), humidityOut, 0, "%");
-  printVal(F("Home.humidityInSli"), humidityIn, 0);
-  printVal(F("Home.humidityOutSli"), humidityOut, 0);
+  if (round(10 * tIn) != round(10 * lastValue[0])) {
+    lastValue[0] = tIn;
+    printTxt(F("Home.tempIn"), tIn, 1, "");
+  }
+  if (round(10 * tOut) != round(10 * lastValue[1])) {
+    lastValue[1] = tOut;
+    printTxt(F("Home.tempOut"), tOut, 1, "");
+  }
+  if (round(humidityIn) != round(lastValue[2])) {
+    lastValue[2] = humidityIn;
+    printTxt(F("Home.humidityIn"), humidityIn, 0, "%");
+    printVal(F("Home.humidityInSli"), humidityIn, 0);
+  }
+  if (round(humidityOut) != round(lastValue[3])) {
+    lastValue[3] = humidityOut;
+    printTxt(F("Home.humidityOut"), humidityOut, 0, "%");
+    printVal(F("Home.humidityOutSli"), humidityOut, 0);
+  }
 }
 
-void sendTempSettings() {
+void sendEnvironmentSettings() {
   // Temperature page
   printVal(F("Temperature.mode"), tempMode, 0);
   printVal(F("Temperature.tempRequestedC"), tempRequestedC, 0);

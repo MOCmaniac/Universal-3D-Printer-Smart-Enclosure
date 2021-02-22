@@ -3,8 +3,9 @@
 #define MAX_PWM 320 // max pwm at 25kHz
 
 // Fan variables
+const float coeff = 0.95;
 const byte PULSE_PER_REVOLUTION = 2;
-const unsigned short fanRPMMin = 230;
+const unsigned short fanRPMMin = 450;
 unsigned long updateTimeMax = 60e6 / (fanRPMMin*PULSE_PER_REVOLUTION); // Expressed in microseconds
 unsigned long lastRPMUpdate = 0; // overflows after approximately 70 minutes using micros()
 int volatile counter = 0;
@@ -63,7 +64,7 @@ void fanSafety(byte on) {
   if (on) {
     safety = 1;
     setPIDMode(0);
-    if(!toPageSafety){
+    if (!toPageSafety) {
       goToPage("Safety");
       toPageSafety = 1;
     }
@@ -92,7 +93,13 @@ void computeRPM() {
   if (counter >= 6 || (micros() - lastRPMUpdate) > (updateTimeMax * 6.5)) { // No overflow problem using this expression
     //Update RPM every 6 counts, increase this for better RPM resolution,
     //decrease for faster update
-    fanRPM = (counter * 1e6 * 60) / ((micros() - lastRPMUpdate) * PULSE_PER_REVOLUTION);
+    float newRPM = (counter * 1e6 * 60) / ((micros() - lastRPMUpdate) * PULSE_PER_REVOLUTION);
+    // Filter fan RPM
+    if (abs(newRPM / fanRPM - 1) < 0.1) {
+      fanRPM = round(coeff * newRPM + (1 - coeff) * fanRPM);
+    } else {
+      fanRPM = newRPM;
+    }
     lastRPMUpdate = micros();
     counter = 0;
   }
@@ -115,23 +122,26 @@ void analogWrite25k(int pin, int value) {
 }
 
 void sendFanValues() {
-  // Fan values
+  static int lastValue[2];
   int power = roundInt(fanPower, 100, 320);
-  printVal(F("Home.fanSlider"), power, 0);
-  printTxt(F("Home.fanPower"), power, 0, "%");
-
-  printTxt(F("Home.fanRPM"), fanRPM, 0, " RPM");
-  fanDisplay();
+  if (power != lastValue[0]) {
+    lastValue[0] = power;
+    printVal(F("Home.fanSlider"), power, 0);
+    printTxt(F("Home.fanPower"), power, 0, "%");
+  }
+  if (fanRPM != lastValue[1]) {
+    lastValue[1] = fanRPM;
+    printTxt(F("Home.fanRPM"), fanRPM, 0, " RPM");
+    fanDisplay();
+  }
 }
 
 void fanDisplay() {
   if (fanRPM != 0) {
-    Serial.print(F("Home.fanRotate.en=1"));
-    writeFF();
+    printEn(F("Home.fanRotate"), 1);
     fanIncrement();
   } else {
-    Serial.print(F("Home.fanRotate.en=0"));
-    writeFF();
+    printEn(F("Home.fanRotate"), 0);
   }
 }
 

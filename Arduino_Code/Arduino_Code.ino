@@ -6,16 +6,16 @@ const int DOOR_SENSOR_UPDATE_RATE = 100; // Expressed in milliseconds
 unsigned long lastDoorSensorUpdate = 0;
 
 // Environment variables
-const int ENVIRONMENT_SENSOR_SAMPLING_RATE = 1000; // Expressed in milliseconds
+const int ENVIRONMENT_SENSOR_SAMPLING_RATE = 1500; // Expressed in milliseconds
 unsigned long lastEnvironmentSensorSampling = 0;
-const int SAVE_DATA_RATE = 1000;
+const int SAVE_DATA_RATE = 2500;
 unsigned long lastDataSave = 0;
 const int SENSOR_I2C_BEGIN = 3000; // Expressed in milliseconds
 unsigned long lastI2CBegin = 0;
 byte i2cBeginOk = 0;
 
 // Fan variables
-const int FAN_VALUE_UPDATE_RATE = 200; // Expressed in milliseconds
+const int FAN_VALUE_UPDATE_RATE = 400; // Expressed in milliseconds
 unsigned long lastFanValueUpdate = 0;
 
 // Light variables
@@ -23,8 +23,8 @@ const int LIGHT_UPDATE_RATE = 25; // Expressed in milliseconds
 unsigned long lastLightUpdate = 0;
 
 // General variables
-byte homeScreenActive = 0;
-byte graphActive = 0;
+byte homePageActive = 0;
+byte graphPageActive = 0;
 
 // Serial input variables
 const byte numChars = 10;
@@ -64,9 +64,9 @@ void loop() {
 
   if (millis() - lastEnvironmentSensorSampling > ENVIRONMENT_SENSOR_SAMPLING_RATE) {
     readEnvironmentSensor();
-    tempTarget();
+    setTempTarget();
     checkError();
-    if (homeScreenActive) {
+    if (homePageActive) {
       sendEnvironmentValues();
     }
     lastEnvironmentSensorSampling = millis();
@@ -74,13 +74,13 @@ void loop() {
 
   if (millis() - lastDataSave > SAVE_DATA_RATE && i2cBeginOk) {
     saveData();
-    if (graphActive) {
+    if (graphPageActive) {
       sendGraph();
     }
     lastDataSave = millis();
   }
 
-  if (millis() - lastFanValueUpdate > FAN_VALUE_UPDATE_RATE && homeScreenActive) {
+  if (millis() - lastFanValueUpdate > FAN_VALUE_UPDATE_RATE && homePageActive) {
     sendFanValues();
     lastFanValueUpdate = millis();
   }
