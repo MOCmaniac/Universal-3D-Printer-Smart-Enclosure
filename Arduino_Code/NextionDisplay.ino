@@ -53,7 +53,8 @@ void handleDisplayInput(char* string) {
 }
 
 void sendSettings() {
-  printEn(F("Welcome.initialization"),0);
+  printEn(F("Startup.initialization"),0);
+  printEn(F("timerLoading"), 0);
 
   sendEnvironmentSettings();
   sendFanSettings();

@@ -1,6 +1,12 @@
+// Arduino nano "normal"
+#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__)
+#define POINTS 300
+#else if defined (__megaAVR_ATMEGA168__) || (__megaAVR_ATMEGA4809__)
+#define POINTS 720
+#endif
+
 #define MIN_WAVEFORM 0
 #define MAX_WAVEFORM 255
-#define POINTS 300
 
 byte allSent = 0;
 byte data[3][POINTS];
@@ -10,15 +16,13 @@ int sendFrom = 0;
 int sendTo = 0;
 
 /*void updateExtremum() {
-  mini = 255;
-  maxi = 0;
   for (byte i = 0; i < 2; i++) {
     for (int j = sendFrom; j < sendTo; i++) {
-      mini = min(mini, data[j% POINTS]);
-      maxi = max(mini, data[j% POINTS]);
+      mini = min(mini, data[j % POINTS]);
+      maxi = max(mini, data[j % POINTS]);
     }
   }
-  }*/
+}*/
 
 void saveData() {
   data[0][putIndex % POINTS] = mapFloat(tempIn, 20, 35, 0, 255);

@@ -43,7 +43,7 @@ void setup() {
 
   loadSettings();
 
-  goToPage("Welcome");
+  goToPage("Startup");
 }
 
 void loop() {

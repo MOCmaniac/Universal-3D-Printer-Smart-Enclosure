@@ -6,13 +6,14 @@ byte lightDoorOpen = 1;  // to save
 byte lightDoorClosed = 1;  // to save
 byte lightTransition = 1;  // to save
 
-int defaultBrightness = 255;  // to save
-float targetBrightness[NUMBER_OF_LIGHTS] = {255, 255};
-float currentBrightness[NUMBER_OF_LIGHTS] = {255, 255};
+int defaultBrightness = 0;  // to save
+float targetBrightness[NUMBER_OF_LIGHTS] = {0, 0}; // Must be 0 to avoid a sudden change from 255 to 0
+float currentBrightness[NUMBER_OF_LIGHTS] = {0, 0}; // Must be 0 to avoid a sudden change from 255 to 0
 
 void setupLight() {
   for (int i = 0; i < NUMBER_OF_LIGHTS; i++) {
     pinMode(LIGHT_PIN[i], OUTPUT);
+    analogWrite(LIGHT_PIN[i], LOW);
   }
 }
 
