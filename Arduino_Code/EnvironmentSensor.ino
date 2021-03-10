@@ -6,9 +6,8 @@
 const float temperatureThreshold = -0.3;
 byte tempMode = 1; // to save
 byte tempUnit = 1; // to save
-float tempRequestedC = 22;  // to save
-float tempRequestedF = 72;  // to save
-float tempDelta = 3; // to save
+float tempRequested = 25;  // to save
+float tempDelta = 5; // to save
 float tempTarget;
 
 float tempIn;
@@ -68,16 +67,19 @@ void setupPID() {
 
 void setTemp(float value) {
   if (tempMode) {
-    tempDelta = value;
-    EEPROM.put(10, tempDelta);
+    if (tempUnit) {
+      tempDelta = value;
+    } else {
+      tempDelta = fahrenheitToCelsius(value);
+    }
+    EEPROM.put(6, tempDelta);
   } else {
     if (tempUnit) {
-      tempRequestedC = value;
-      EEPROM.put(2, tempRequestedC);
+      tempRequested = value;
     } else {
-      tempRequestedF = fahrenheitToCelsius(value);
-      EEPROM.put(6, tempRequestedF);
+      tempRequested = fahrenheitToCelsius(tempRequested);
     }
+    EEPROM.put(2, tempRequested);
   }
 }
 
@@ -119,7 +121,7 @@ void readEnvironmentSensor() {
   }
 }
 
-void checkError() {
+byte checkError() {
   // Only send values if it changes
   static byte lastErrorIn;
   static byte lastErrorOut;
@@ -135,8 +137,10 @@ void checkError() {
 
   if (errorSensorIn || errorSensorOut) {
     fanSafety(1);
+    return 1;
   } else {
     fanSafety(0);
+    return 0;
   }
 }
 
@@ -144,11 +148,7 @@ void setTempTarget() {
   if (tempMode) {
     tempTarget = tempOut + tempDelta;
   } else {
-    if (tempUnit) {
-      tempTarget = tempRequestedC;
-    } else {
-      tempTarget = tempRequestedF;
-    }
+    tempTarget = tempRequested;
   }
 }
 
@@ -183,20 +183,20 @@ void sendEnvironmentValues() {
 
   if (round(10 * tIn) != round(10 * lastValue[0])) {
     lastValue[0] = tIn;
-    printTxt(F("Home.tempIn"), tIn, 1, "");
+    printFloatTxt(F("Home.tempIn"), tIn, 1, "");
   }
   if (round(10 * tOut) != round(10 * lastValue[1])) {
     lastValue[1] = tOut;
-    printTxt(F("Home.tempOut"), tOut, 1, "");
+    printFloatTxt(F("Home.tempOut"), tOut, 1, "");
   }
   if (round(humidityIn) != round(lastValue[2])) {
     lastValue[2] = humidityIn;
-    printTxt(F("Home.humidityIn"), humidityIn, 0, "%");
+    printFloatTxt(F("Home.humidityIn"), humidityIn, 0, "%");
     printVal(F("Home.humidityInSli"), humidityIn, 0);
   }
   if (round(humidityOut) != round(lastValue[3])) {
     lastValue[3] = humidityOut;
-    printTxt(F("Home.humidityOut"), humidityOut, 0, "%");
+    printFloatTxt(F("Home.humidityOut"), humidityOut, 0, "%");
     printVal(F("Home.humidityOutSli"), humidityOut, 0);
   }
 }
@@ -204,9 +204,14 @@ void sendEnvironmentValues() {
 void sendEnvironmentSettings() {
   // Temperature page
   printVal(F("Temperature.mode"), tempMode, 0);
-  printVal(F("Temperature.tempRequestedC"), tempRequestedC, 0);
-  printVal(F("Temperature.tempRequestedF"), celsiusToFahrenheit(tempRequestedF), 0);
+  printVal(F("Temperature.unit"), tempUnit, 0);
+  printVal(F("Temperature.tempRequested"), tempRequested, 0);
   printVal(F("Temperature.tempDelta"), tempDelta, 0);
+  // If not in Celsius (default on screen) change it to Fahrenheit 
+  if(!tempUnit){
+    Serial.print(F("Home.tempUnit.txt=Home.degreeF.txt"));
+    writeFF();
+  }
 }
 
 byte loadTempSettings(byte start) {
@@ -215,9 +220,7 @@ byte loadTempSettings(byte start) {
   address++;
   EEPROM.get(address, tempUnit);
   address++;
-  EEPROM.get(address, tempRequestedC);
-  address += 4;
-  EEPROM.get(address, tempRequestedF);
+  EEPROM.get(address, tempRequested);
   address += 4;
   EEPROM.get(address, tempDelta);
   address += 4;

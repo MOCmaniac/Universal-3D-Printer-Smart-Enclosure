@@ -19,22 +19,22 @@ void setupLight() {
 
 void setBrightness(int newBrightness) {
   defaultBrightness = roundInt(newBrightness, 255 , 100);
-  EEPROM.put(24, defaultBrightness);
+  EEPROM.put(20, defaultBrightness);
 }
 
 void setTransition(byte newTransition) {
   lightTransition = newTransition;
-  EEPROM.put(23, lightTransition);
+  EEPROM.put(19, lightTransition);
 }
 
 void setDoorOpen(byte newState) {
   lightDoorOpen = newState;
-  EEPROM.put(21, lightDoorOpen);
+  EEPROM.put(17, lightDoorOpen);
 }
 
 void setDoorClosed(byte newState) {
   lightDoorClosed = newState;
-  EEPROM.put(22, lightDoorClosed);
+  EEPROM.put(18, lightDoorClosed);
 }
 
 void updateBrightness() {
@@ -73,7 +73,7 @@ void writeBrightness() {
 
 void sendLightSettings() {
   // Home page
-  printTxt(F("Home.lightPower"), roundInt(defaultBrightness , 100 , 255), 0, "%");
+  printFloatTxt(F("Home.lightPower"), roundInt(defaultBrightness , 100 , 255), 0, "%");
 
   // Light page
   // Default is OFF on the GUI

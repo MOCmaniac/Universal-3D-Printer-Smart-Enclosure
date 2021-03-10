@@ -3,7 +3,7 @@
 #define MAX_PWM 320 // max pwm at 25kHz
 
 // Fan variables
-const float coeff = 0.95;
+const float coeff = 0.97;
 const byte PULSE_PER_REVOLUTION = 2;
 const unsigned short fanRPMMin = 450;
 unsigned long updateTimeMax = 60e6 / (fanRPMMin*PULSE_PER_REVOLUTION); // Expressed in microseconds
@@ -40,22 +40,22 @@ void setupFan() {
 
 void setFanPower(int newPower) {
   fanPowerManual = roundInt(newPower, MAX_PWM, 100);
-  EEPROM.put(19, fanPowerManual);
+  EEPROM.put(15, fanPowerManual);
 }
 
 void setPWMMin(int newMin) {
   fanPWMMin = roundInt(newMin, MAX_PWM, 100);
-  EEPROM.put(15, fanPWMMin);
+  EEPROM.put(11, fanPWMMin);
 }
 
 void setPWMMax(int newMax) {
   fanPWMMax = roundInt(newMax, MAX_PWM, 100);
-  EEPROM.put(17, fanPWMMax);
+  EEPROM.put(13, fanPWMMax);
 }
 
 void setFanMode(byte newMode) {
   fanMode = newMode;
-  EEPROM.put(14, fanMode);
+  EEPROM.put(10, fanMode);
   setPIDMode(fanMode);
 }
 
@@ -94,7 +94,7 @@ void computeRPM() {
     //Update RPM every 6 counts, increase this for better RPM resolution,
     //decrease for faster update
     float newRPM = (counter * 1e6 * 60) / ((micros() - lastRPMUpdate) * PULSE_PER_REVOLUTION);
-    // Filter fan RPM
+    // fan RPM Smoothing
     if (abs(newRPM / fanRPM - 1) < 0.1) {
       fanRPM = round(coeff * newRPM + (1 - coeff) * fanRPM);
     } else {
@@ -127,11 +127,11 @@ void sendFanValues() {
   if (power != lastValue[0]) {
     lastValue[0] = power;
     printVal(F("Home.fanSlider"), power, 0);
-    printTxt(F("Home.fanPower"), power, 0, "%");
+    printFloatTxt(F("Home.fanPower"), power, 0, "%");
   }
   if (fanRPM != lastValue[1]) {
     lastValue[1] = fanRPM;
-    printTxt(F("Home.fanRPM"), fanRPM, 0, " RPM");
+    printFloatTxt(F("Home.fanRPM"), fanRPM, 0, " RPM");
     fanDisplay();
   }
 }

@@ -64,8 +64,10 @@ void loop() {
 
   if (millis() - lastEnvironmentSensorSampling > ENVIRONMENT_SENSOR_SAMPLING_RATE) {
     readEnvironmentSensor();
-    setTempTarget();
-    checkError();
+    byte error = checkError();
+    if(!error){
+      setTempTarget();
+    }
     if (homePageActive) {
       sendEnvironmentValues();
     }
@@ -135,6 +137,13 @@ void loadSettings() {
   byte address = loadTempSettings(0);
   address = loadFanSettings(address);
   loadLightSettings(address);
+}
+
+void checkSetting(float value, float low, float high, float def){
+  if(value >= low && value <= high){
+    return value;
+  }
+  return def;
 }
 
 int roundInt(int value, int multiply, int divide) {

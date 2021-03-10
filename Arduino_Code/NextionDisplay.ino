@@ -53,6 +53,7 @@ void handleDisplayInput(char* string) {
 }
 
 void sendSettings() {
+  printTxt(F("message"), F("CONNECTED !"));
   printEn(F("Startup.initialization"),0);
   printEn(F("timerLoading"), 0);
 
@@ -62,6 +63,8 @@ void sendSettings() {
 
   // Enable timer to switch to page Home
   printEn(F("toHome"), 1);
+  homePageActive = 0;
+  graphPageActive = 0;
 }
 
 void goToPage(char* pageName) {
@@ -78,7 +81,15 @@ void printAdd(byte channel, byte value) {
   writeFF();
 }
 
-void printTxt(const __FlashStringHelper* name, float value, byte precision, char* unit) {
+void printTxt(const __FlashStringHelper* name,  const __FlashStringHelper* txt) {
+  Serial.print(name);
+  Serial.print(F(".txt=\""));
+  Serial.print(txt);
+  Serial.print(F("\""));
+  writeFF();
+}
+
+void printFloatTxt(const __FlashStringHelper* name, float value, byte precision, char* unit) {
   Serial.print(name);
   Serial.print(F(".txt=\""));
   Serial.print(value, precision);
