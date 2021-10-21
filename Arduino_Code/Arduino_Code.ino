@@ -1,6 +1,8 @@
 #include <PID_v2.h>
 #include <EEPROM.h>
 
+#define PRINTER_RELAY_PIN 11
+
 // Door variables
 const int DOOR_SENSOR_UPDATE_RATE = 100; // Expressed in milliseconds
 unsigned long lastDoorSensorUpdate = 0;
@@ -34,7 +36,7 @@ boolean newData = false;
 
 void setup() {
   Serial.begin(115200);
-
+  
   setupLight();
   setupDoor();
   i2cBeginOk = setupEnvironmentSensor();
@@ -65,7 +67,7 @@ void loop() {
   if (millis() - lastEnvironmentSensorSampling > ENVIRONMENT_SENSOR_SAMPLING_RATE) {
     readEnvironmentSensor();
     byte error = checkError();
-    if(!error){
+    if (!error) {
       setTempTarget();
     }
     if (homePageActive) {
@@ -133,18 +135,19 @@ void recvWithStartEndMarkers() {
   }
 }
 
+// Read saved settings from the EEPROM
 void loadSettings() {
   byte address = loadTempSettings(0);
   address = loadFanSettings(address);
   loadLightSettings(address);
 }
 
-void checkSetting(float value, float low, float high, float def){
+/*void checkSetting(float value, float low, float high, float def){
   if(value >= low && value <= high){
     return value;
   }
   return def;
-}
+  }*/
 
 int roundInt(int value, int multiply, int divide) {
   return round((float) value * multiply / divide);

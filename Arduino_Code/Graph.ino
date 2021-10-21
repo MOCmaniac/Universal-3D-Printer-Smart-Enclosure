@@ -1,10 +1,11 @@
 // Arduino nano "normal"
-#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__)
+/*#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__)
 #define POINTS 300
 #else if defined (__megaAVR_ATMEGA168__) || (__megaAVR_ATMEGA4809__)
 #define POINTS 720
-#endif
+#endif*/
 
+#define POINTS 300
 #define MIN_WAVEFORM 0
 #define MAX_WAVEFORM 255
 

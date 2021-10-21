@@ -22,7 +22,7 @@ byte beginSuccessOut = 0;
 byte errorSensorIn = 1; // Must be 1
 byte errorSensorOut = 1;
 
-double Kp = 250, Ki = 16.0, Kd = 0.0;
+double Kp = 100, Ki = 8.0, Kd = 0.0;
 PID_v2 myPID(Kp, Ki, Kd, PID::Direct);
 
 byte setupEnvironmentSensor() {
@@ -170,7 +170,8 @@ float fahrenheitToCelsius(float val) {
 }
 
 void sendEnvironmentValues() {
-  static float lastValue[4];
+  // Initialize to an impossible value to send it once
+  static float lastValue[4] = {-100.0, -100.0, -100.0, -100.0};
   float tIn;
   float tOut;
   if (tempUnit) {
@@ -181,6 +182,7 @@ void sendEnvironmentValues() {
     tOut = celsiusToFahrenheit(tempOut);
   }
 
+  // Compare to a tenth
   if (round(10 * tIn) != round(10 * lastValue[0])) {
     lastValue[0] = tIn;
     printFloatTxt(F("Home.tempIn"), tIn, 1, "");
@@ -189,6 +191,7 @@ void sendEnvironmentValues() {
     lastValue[1] = tOut;
     printFloatTxt(F("Home.tempOut"), tOut, 1, "");
   }
+  // Comapre to the unit
   if (round(humidityIn) != round(lastValue[2])) {
     lastValue[2] = humidityIn;
     printFloatTxt(F("Home.humidityIn"), humidityIn, 0, "%");
@@ -207,8 +210,10 @@ void sendEnvironmentSettings() {
   printVal(F("Temperature.unit"), tempUnit, 0);
   printVal(F("Temperature.tempRequested"), tempRequested, 0);
   printVal(F("Temperature.tempDelta"), tempDelta, 0);
+  // Home page
   // If not in Celsius (default on screen) change it to Fahrenheit 
   if(!tempUnit){
+    // Impossible to send "°" with ASCII
     Serial.print(F("Home.tempUnit.txt=Home.degreeF.txt"));
     writeFF();
   }

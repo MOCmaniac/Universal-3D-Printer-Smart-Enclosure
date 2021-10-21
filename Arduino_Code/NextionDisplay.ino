@@ -54,7 +54,7 @@ void handleDisplayInput(char* string) {
 
 void sendSettings() {
   printTxt(F("message"), F("CONNECTED !"));
-  printEn(F("Startup.initialization"),0);
+  printEn(F("Startup.initialization"), 0);
   printEn(F("timerLoading"), 0);
 
   sendEnvironmentSettings();
@@ -105,7 +105,7 @@ void printVal(const __FlashStringHelper* name, float value, byte precision) {
   writeFF();
 }
 
-void printEn(const __FlashStringHelper* name, byte enable){
+void printEn(const __FlashStringHelper* name, byte enable) {
   Serial.print(name);
   Serial.print(F(".en="));
   Serial.print(enable);
